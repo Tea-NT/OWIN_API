@@ -6,6 +6,8 @@ using Newtonsoft.Json.Serialization;
 using Owin;
 using System;
 using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -157,7 +159,19 @@ namespace OWIN_API
                     context.Response.ContentType = "application/x-javascript";
                 else if (perfix == ".css")
                     context.Response.ContentType = "text/css";
-                return context.Response.WriteAsync(File.ReadAllText(path));
+                else if (perfix == ".png")
+                { context.Response.ContentType = "image/png";
+                    //var imgByte = File.ReadAllBytes(path);
+                    //var resp = new HttpResponseMessage(HttpStatusCode.OK)
+                    //{
+                    //    Content = new ByteArrayContent(imgByte)
+                    //    //或者
+                    //    //Content = new StreamContent(stream)
+                    //};
+                    //return context.Response.Body
+                }
+
+                return context.Response.WriteAsync(File.ReadAllBytes(path));
                 //return SetResponse(context, path);
             }
             catch (Exception e)
