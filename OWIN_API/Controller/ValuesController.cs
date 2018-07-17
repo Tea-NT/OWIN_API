@@ -1,4 +1,5 @@
 ﻿using FANUC;
+using Microsoft.AspNet.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -49,6 +50,7 @@ namespace OWIN_API
             string port = "8193";
             string timeout = "5";
             var result =  ConcectAsync1(ip, port, timeout);
+
             return result.Result;
 
             //return new string[] { ret.ToString() };
@@ -67,6 +69,9 @@ namespace OWIN_API
             if (ret != Fanuc.EW_OK)
             {
                 ErrorMsg a = new ErrorMsg { Msg = "连接设备失败", DeviceCode = ret.ToString() };
+                //MyHub.GlobalHubClients.All.addMessage("控制中心", "连接设备失败，请检查设备网络状态");
+                var context= GlobalHost.ConnectionManager.GetHubContext<MyHub>();
+                context.Clients.All.addMessage("控制中心", "连接设备失败，请检查设备网络状态");
                 return new  { Msg = "连接设备失败", DeviceCode = ret.ToString(), IP = ip}; 
             }
             else

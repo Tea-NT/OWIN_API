@@ -1,14 +1,19 @@
 ﻿using Microsoft.AspNet.SignalR;
+using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.Owin;
 using Microsoft.Owin.Cors;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Owin;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Formatting;
+using System.Runtime.CompilerServices;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web.Http;
 
@@ -27,7 +32,10 @@ namespace OWIN_API
 
             appBuilder.UseErrorPage();
             appBuilder.UseCors(CorsOptions.AllowAll);
-            appBuilder.MapSignalR();
+
+            var hubConfig = new HubConfiguration();
+            hubConfig.EnableDetailedErrors = true;
+            appBuilder.MapSignalR(hubConfig);
 
             appBuilder.UseWebApi(config);
             //appBuilder.UseWelcomePage();
@@ -181,12 +189,138 @@ namespace OWIN_API
         }
     }
 
+
     public class MyHub:Hub
     {
+        public static IHubCallerConnectionContext<dynamic>  GlobalHubClients;
+        public MyHub() : base()
+        {
+            GlobalHubClients = Clients;
+        }
+
         public void Send(string name,string message)
         {
             var ipAddress = Context.Request.Environment["server.RemoteIpAddress"];
-            Clients.All.addMessage(name, message+"     Ip地址:" +ipAddress);
+            IPAddress iPAddress = IPAddress.Parse(ipAddress.ToString());
+            iPAddress.MapToIPv4().ToString();
+            Clients.All.addMessage(name, message+"     Ip地址:" + iPAddress.MapToIPv4().ToString());
+            Clients.Group("SignalR Users").addMessage("Group chanle", message);
+        }
+        //ClientManager clientManager= new ClientManager();
+        public override async Task OnConnected()
+        {
+           //clientManager = new ClientManager();
+
+            var ipAddress = Context.Request.Environment["server.RemoteIpAddress"];
+            IPAddress iPAddress = IPAddress.Parse(ipAddress.ToString());
+            string tempip = iPAddress.MapToIPv4().ToString();
+            //if (clientManager.IpList.Contains(iPAddress.MapToIPv4().ToString()))
+            //if (clientManager.allClient.Any(x => x.IpAddress == tempip &&
+            //!clientManager.DicClientID.Keys.Contains(x.UserName)))
+            //{
+            //    var client = clientManager.allClient.Find(x => x.IpAddress == tempip);
+            //    await Groups.Add(Context.ConnectionId, "All Users");
+            //    await Groups.Add(Context.ConnectionId, client.PartName);//加到部门组，部门聊天
+            //    clientManager.DicClientID.Add(client.UserName, Context.ConnectionId);//加到连接字典，私聊
+            //}
+            //else
+            //{
+            //    Clients.Caller.stopClient();
+            //}
+            int errorcode = 0;
+            if (!ClientManager.allClient.Any(x => x.IpAddress == tempip))
+            { errorcode = 1; }
+            var client = errorcode == 0 ? ClientManager.allClient.Find(x => x.IpAddress == tempip) : null;
+            if (ClientManager.DicClientID.Keys.Contains(client?.UserName))
+            { errorcode = 2; }
+            if (errorcode != 0)
+                Clients.Caller.stopClient(errorcode);
+            else
+            {
+                client.ConnectedID = Context.ConnectionId;
+                await Groups.Add(Context.ConnectionId, "All Users");
+                await Groups.Add(Context.ConnectionId, client.PartName);//加到部门组，部门聊天
+                ClientManager.DicClientID.Add(client.UserName, Context.ConnectionId);//加到连接字典，私聊
+                await base.OnConnected();
+            }
+        }
+
+        public override async Task OnDisconnected(bool stopCalled)
+        {
+            var ipAddress = Context.Request.Environment["server.RemoteIpAddress"];
+            IPAddress iPAddress = IPAddress.Parse(ipAddress.ToString());
+            string tempip = iPAddress.MapToIPv4().ToString();
+            var client = ClientManager.allClient.Find(x => x.IpAddress == tempip);
+
+            try
+            {
+                Groups.Remove(Context.ConnectionId, "All Users");
+            }
+            catch (Exception e)
+            {
+
+                throw e;
+            }
+
+            Groups.Remove(Context.ConnectionId, client.PartName);//加到部门组，部门聊天
+            if (client.ConnectedID == Context.ConnectionId)
+            { ClientManager.DicClientID.Remove(client.UserName); }//加到连接字典，私聊
+            string offlinereason = stopCalled ? "关闭连接" : "超时";
+            Console.WriteLine("Clinet off line because " + offlinereason + "  User:" + client.UserName);
+            await base.OnDisconnected(stopCalled);
         }
     }
+
+    public static class ClientManager
+    {
+        public static List<string> IpList=new List<string>(0);
+        public static Dictionary<string, string> DicClientID = new Dictionary<string, string>();
+        public static List<ClientInfo> allClient = new List<ClientInfo>();
+
+        //todo: 添加客户端ip管理，用户名管理，以及部门管理
+        static ClientManager()
+        {
+            IpList.Add("192.168.113.4");
+            IpList.Add("172.30.252.49");
+            IpList.Add("192.168.113.8");
+            allClient.Add(new ClientInfo {IpAddress= "192.168.113.4",UserName="刘涛",PartName="研发" });
+            allClient.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "刘涛", PartName = "研发" });
+            allClient.Add(new ClientInfo { IpAddress = "192.168.113.8", UserName = "刘涛台机", PartName = "研发" });
+
+        }
+
+
+
+
+    }
+
+    /// <summary>
+    /// ip地址，用户名，部门名，认证信息
+    /// </summary>
+    public class ClientInfo
+    {
+        public string IpAddress;
+
+        public string UserName;
+
+        public string PartName;
+
+        public string ConnectedID;
+
+    }
+
+    public enum ClientGroup
+    {
+        UnCert=0,
+
+        Cert=1
+
+    }
+    //public class CustomUserIdProvider:IUserIdProvider
+    //{
+    //    public virtual string GetUserId(HubConnectionContext connection)
+    //    {
+    //        return connection.Users?.FindFirst(ClaimTypes.Email)?.Value;
+    //    }
+    //}
 }
