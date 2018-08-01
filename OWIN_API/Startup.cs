@@ -231,7 +231,7 @@ namespace OWIN_API
             if (!ClientManager.allClient.Any(x => x.IpAddress == tempip))
             { errorcode = 1; }
             var client = errorcode == 0 ? ClientManager.allClient.Find(x => x.IpAddress == tempip) : null;
-            if (ClientManager.DicClientID.Keys.Contains(client?.UserName))
+            if (errorcode == 0 && ClientManager.DicClientID.Keys.Contains(client?.UserName))
             { errorcode = 2; }
             if (errorcode != 0)
                 Clients.Caller.stopClient(errorcode);
@@ -285,8 +285,9 @@ namespace OWIN_API
             IpList.Add("192.168.113.8");
             allClient.Add(new ClientInfo {IpAddress= "192.168.113.4",UserName="刘涛",PartName="研发" });
             allClient.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "刘涛", PartName = "研发" });
-            allClient.Add(new ClientInfo { IpAddress = "192.168.113.8", UserName = "刘涛台机", PartName = "研发" });
-
+            allClient.Add(new ClientInfo { IpAddress = "192.168.113.3", UserName = "刘涛台机", PartName = "研发" });
+            allClient.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "刘涛笔记本", PartName = "研发" });
+            
         }
 
 
@@ -299,14 +300,19 @@ namespace OWIN_API
     /// </summary>
     public class ClientInfo
     {
-        public string IpAddress;
+        private string ipAddress;
 
-        public string UserName;
+        private string userName;
 
-        public string PartName;
+        private string partName;
 
-        public string ConnectedID;
+        private string connectedID;
 
+        public string IpAddress { get => ipAddress; set => ipAddress = value; }
+        public string UserName { get => userName; set => userName = value; }
+        public string PartName { get => partName; set => partName = value; }
+        public DateTime CreatedTime { get; set; }
+        public string ConnectedID { get => connectedID; set => connectedID = value; }
     }
 
     public enum ClientGroup

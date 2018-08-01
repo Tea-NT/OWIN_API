@@ -167,6 +167,7 @@ ViewBag.Title = "测试交流尬聊";
                 $.connection.hub.stop();
                 if (x === 1) {
                     alert('该电脑未进行认证，请联系管理员！');
+                    $('#systemmsg').html("该电脑未进行认证，请联系管理员！！");
                 }
                 if (x === 2) {
                     alert('该电脑已经登陆客户端，请勿重复登陆！');
