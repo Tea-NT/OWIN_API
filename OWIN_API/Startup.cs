@@ -206,6 +206,17 @@ namespace OWIN_API
             Clients.All.addMessage(name, message+"     Ip地址:" + iPAddress.MapToIPv4().ToString());
             Clients.Group("SignalR Users").addMessage("Group chanle", message);
         }
+
+        public IEnumerable<ClientInfo> GetAllClients()
+        {
+            var ipAddress = Context.Request.Environment["server.RemoteIpAddress"];
+            string iPAddress = IPAddress.Parse(ipAddress.ToString()).MapToIPv4().ToString();
+            if (ClientManager.db.ClientsInfo.Any(x => x.IpAddress == iPAddress))
+                return ClientManager.db.ClientsInfo;
+            else
+                return null;
+        }
+
         //ClientManager clientManager= new ClientManager();
         public override async Task OnConnected()
         {
@@ -228,9 +239,9 @@ namespace OWIN_API
             //    Clients.Caller.stopClient();
             //}
             int errorcode = 0;
-            if (!ClientManager.allClient.Any(x => x.IpAddress == tempip))
+            if (!ClientManager.db.ClientsInfo.Any(x => x.IpAddress == tempip))
             { errorcode = 1; }
-            var client = errorcode == 0 ? ClientManager.allClient.Find(x => x.IpAddress == tempip) : null;
+            var client = errorcode == 0 ? ClientManager.db.ClientsInfo.FirstOrDefault(x => x.IpAddress == tempip) : null;
             if (errorcode == 0 && ClientManager.DicClientID.Keys.Contains(client?.UserName))
             { errorcode = 2; }
             if (errorcode != 0)
@@ -241,6 +252,7 @@ namespace OWIN_API
                 await Groups.Add(Context.ConnectionId, "All Users");
                 await Groups.Add(Context.ConnectionId, client.PartName);//加到部门组，部门聊天
                 ClientManager.DicClientID.Add(client.UserName, Context.ConnectionId);//加到连接字典，私聊
+                ClientManager.db.SaveChanges();
                 await base.OnConnected();
             }
         }
@@ -250,7 +262,7 @@ namespace OWIN_API
             var ipAddress = Context.Request.Environment["server.RemoteIpAddress"];
             IPAddress iPAddress = IPAddress.Parse(ipAddress.ToString());
             string tempip = iPAddress.MapToIPv4().ToString();
-            var client = ClientManager.allClient.Find(x => x.IpAddress == tempip);
+            var client = ClientManager.db.ClientsInfo.FirstOrDefault(x => x.IpAddress == tempip);
 
             try
             {
@@ -262,9 +274,12 @@ namespace OWIN_API
                 throw e;
             }
 
-            Groups.Remove(Context.ConnectionId, client.PartName);//加到部门组，部门聊天
+              Groups.Remove(Context.ConnectionId, client.PartName);//加到部门组，部门聊天
             if (client.ConnectedID == Context.ConnectionId)
-            { ClientManager.DicClientID.Remove(client.UserName); }//加到连接字典，私聊
+            { ClientManager.DicClientID.Remove(client.UserName);
+                client.ConnectedID = "";
+                ClientManager.db.SaveChanges();
+            }//加到连接字典，私聊
             string offlinereason = stopCalled ? "关闭连接" : "超时";
             Console.WriteLine("Clinet off line because " + offlinereason + "  User:" + client.UserName);
             await base.OnDisconnected(stopCalled);
@@ -273,9 +288,11 @@ namespace OWIN_API
 
     public static class ClientManager
     {
-        public static List<string> IpList=new List<string>(0);
+        public static List<string> IpList = new List<string>(0);
         public static Dictionary<string, string> DicClientID = new Dictionary<string, string>();
         public static List<ClientInfo> allClient = new List<ClientInfo>();
+
+        public static ClientsDbContext db;
 
         //todo: 添加客户端ip管理，用户名管理，以及部门管理
         static ClientManager()
@@ -283,11 +300,40 @@ namespace OWIN_API
             IpList.Add("192.168.113.4");
             IpList.Add("172.30.252.49");
             IpList.Add("192.168.113.8");
-            allClient.Add(new ClientInfo {IpAddress= "192.168.113.4",UserName="刘涛",PartName="研发" });
+            allClient.Add(new ClientInfo { IpAddress = "192.168.113.4", UserName = "刘涛", PartName = "研发" });
             allClient.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "刘涛", PartName = "研发" });
             allClient.Add(new ClientInfo { IpAddress = "192.168.113.3", UserName = "刘涛台机", PartName = "研发" });
             allClient.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "刘涛笔记本", PartName = "研发" });
+
+
+            db = new ClientsDbContext();
+            var ss = db.ClientsInfo.FirstOrDefault(x => x.UserName == "刘涛台机");
+            try
+            {
+                ss.IpAddress = "192.168.113.2";
+                db.SaveChanges();
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+            //foreach(var cl in  db.ClientsInfo)
+            //{
+            //    cl.CreatedTime = DateTime.Now;
+            //}
+            //db.SaveChanges();
             
+            //using (ClientsDbContext db = new ClientsDbContext())
+            {
+                /////测试增加数据
+                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "192.168.113.4", UserName = "刘涛", PartName = "研发" });
+                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "刘涛", PartName = "研发" });
+                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "192.168.113.3", UserName = "刘涛台机", PartName = "研发" });
+                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "刘涛笔记本", PartName = "研发" });
+                //db.SaveChanges();
+
+            }
         }
 
 
@@ -308,11 +354,13 @@ namespace OWIN_API
 
         private string connectedID;
 
+        private int id;
         public string IpAddress { get => ipAddress; set => ipAddress = value; }
         public string UserName { get => userName; set => userName = value; }
         public string PartName { get => partName; set => partName = value; }
         public DateTime CreatedTime { get; set; }
         public string ConnectedID { get => connectedID; set => connectedID = value; }
+        public int Id { get => id; set => id = value; }
     }
 
     public enum ClientGroup
@@ -329,4 +377,6 @@ namespace OWIN_API
     //        return connection.Users?.FindFirst(ClaimTypes.Email)?.Value;
     //    }
     //}
+
+
 }
