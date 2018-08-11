@@ -51,6 +51,7 @@ namespace OWIN_API
 
                 //Console.WriteLine(response);
                 //Console.WriteLine(response.Content.ReadAsStringAsync().Result);
+                Console.WriteLine(baseAddress);
                 Console.ReadLine();
             }
         }

@@ -198,6 +198,11 @@ namespace OWIN_API
             GlobalHubClients = Clients;
         }
 
+        /// <summary>
+        /// 发送消息
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="message"></param>
         public void Send(string name,string message)
         {
             var ipAddress = Context.Request.Environment["server.RemoteIpAddress"];
@@ -207,6 +212,10 @@ namespace OWIN_API
             Clients.Group("SignalR Users").addMessage("Group chanle", message);
         }
 
+        /// <summary>
+        /// 查询所有客户端
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<ClientInfo> GetAllClients()
         {
             var ipAddress = Context.Request.Environment["server.RemoteIpAddress"];
@@ -215,6 +224,29 @@ namespace OWIN_API
                 return ClientManager.db.ClientsInfo;
             else
                 return null;
+        }
+
+        /// <summary>
+        /// 增加客户端
+        /// </summary>
+        /// <param name="clientInfo"></param>
+        /// <returns></returns>
+        public string AddClient(ClientInfo clientInfo)
+        {
+            if (ClientManager.db.ClientsInfo.Any(x => x.IpAddress == clientInfo.IpAddress))
+                return "已经添加过此IP地址，请勿重复添加";
+            try
+            {
+                ClientManager.db.ClientsInfo.Add(clientInfo);
+                ClientManager.db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return "新增失败";
+            }
+            
+            return "OK";
         }
 
         //ClientManager clientManager= new ClientManager();
@@ -310,7 +342,7 @@ namespace OWIN_API
             var ss = db.ClientsInfo.FirstOrDefault(x => x.UserName == "刘涛台机");
             try
             {
-                ss.IpAddress = "192.168.113.2";
+                ss.IpAddress = "192.168.113.8";
                 db.SaveChanges();
             }
             catch (Exception)
