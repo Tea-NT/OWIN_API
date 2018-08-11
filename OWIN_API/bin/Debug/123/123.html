@@ -1,0 +1,126 @@
+  <div id="app">
+    <section  class="main-content-wrapper wrapper" >
+        <section id="main-content" >
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- 查询 -->
+                    <ul class="btn-edit fl">
+                        <li class="input-serach">
+                            <el-input :placeholder="placeholder" v-model="keywords" style="width: 300px;">
+                                <el-select v-model="select" @change="searchFieldChange" slot="prepend">
+                                    <el-option label="用户名" value="username"></el-option>
+                                    <el-option label="姓名" value="name"></el-option>
+                                    <el-option label="电话" value="phone"></el-option>
+                                </el-select>
+                                <el-button type="danger" class="danger" slot="append" icon="search" @click="query"></el-button>
+                            </el-input>
+                        </li>
+                    </ul>
+                    <!-- 操作 -->
+                    <ul class="btn-edit fr">
+                        <li >
+                            <el-button type="primary" @click="dialogCreateVisible = true">添加用户</el-button>
+                            <el-button type="primary" icon="delete" :disabled="selected.length==0" @click="removeUsers()"  >删除</el-button>
+                        </li>
+                    </ul>
+                    <!-- 用户列表-->
+                    <el-table :data="users"
+                              stripe
+                              v-loading="loading"
+                              element-loading-text="拼命加载中..."
+                              style="width: 100%"
+                              height="443"
+                              @sort-change="tableSortChange"
+                              @selection-change="tableSelectionChange">
+                        <el-table-column type="selection"
+                                         width="60">
+                        </el-table-column>
+                        <el-table-column sortable="custom" prop="username"
+                                         label="用户名"
+                                         width="100">
+                        </el-table-column>
+                        <el-table-column prop="name"
+                                         label="姓名"
+                                         width="80">
+                        </el-table-column>
+                        <el-table-column prop="phone"
+                                         label="手机">
+                        </el-table-column>
+                        <el-table-column prop="email"
+                                         label="邮箱">
+                        </el-table-column>
+                        <el-table-column prop="create_time" sortable="custom" inline-template
+                                         label="注册日期">
+                            <div>{{ row.create_time | moment('YYYY年MM月DD日 HH:mm:ss')}}</div>
+                        </el-table-column>
+                        <el-table-column inline-template
+                                         label="操作"
+                                         width="250">
+                            <span>
+                                <el-button type="primary" size="mini" @click="removeUser(row)">删除</el-button>
+                                <el-button type="primary" size="mini" @click="setCurrent(row)">编辑</el-button>
+                            </span>
+                        </el-table-column>
+                    </el-table>
+                    <!--分页begin-->
+                    <el-pagination class="tc mg"
+                                   :current-page="filter.page"
+                                   :page-sizes="[10, 20, 50, 100]"
+                                   :page-size="filter.per_page"
+                                   layout="total, sizes, prev, pager, next, jumper"
+                                   :total="total_rows"
+                                   @size-change="pageSizeChange"
+                                   @current-change="pageCurrentChange">
+                    </el-pagination>
+                    <!--分页end-->
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- 创建用户 begin-->
+    <el-dialog title="创建用户" v-model="dialogCreateVisible" :close-on-click-modal="false" :close-on-press-escape="false" @close="reset" >
+        <el-form id="#create" :model="create" :rules="rules" ref="create" label-width="100px">
+            <el-form-item label="用户名" prop="username">
+                <el-input v-model="create.username"></el-input>
+            </el-form-item>
+            <el-form-item label="姓名" prop="name">
+                <el-input v-model="create.name"></el-input>
+            </el-form-item>
+            <el-form-item label="密码" prop="password">
+                <el-input v-model="create.password" type="password" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="确认密码" prop="checkpass">
+                <el-input v-model="create.checkpass" type="password"></el-input>
+            </el-form-item>
+            <el-form-item label="电话" prop="phone">
+                <el-input v-model="create.phone"></el-input>
+            </el-form-item>
+            <el-form-item label="邮箱" prop="email">
+                <el-input v-model="create.email"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogCreateVisible = false">取 消</el-button>
+            <el-button type="primary" :loading="createLoading" @click="createUser">确 定</el-button>
+        </div>
+    </el-dialog>
+    <!-- 修改用户 begin-->
+    <el-dialog title="修改用户信息" v-model="dialogUpdateVisible"  :close-on-click-modal="false" :close-on-press-escape="false">
+        <el-form id="#update" :model="update" :rules="updateRules" ref="update" label-width="100px">
+            <el-form-item label="姓名" prop="name">
+                <el-input v-model="update.name"></el-input>
+            </el-form-item>
+            <el-form-item label="电话" prop="phone">
+                <el-input v-model="update.phone"></el-input>
+            </el-form-item>
+            <el-form-item label="邮箱" prop="email">
+                <el-input v-model="update.email"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogUpdateVisible = false">取 消</el-button>
+            <el-button type="primary" :loading="updateLoading" @click="updateUser">确 定</el-button>
+        </div>
+    </el-dialog>
+  </div>
