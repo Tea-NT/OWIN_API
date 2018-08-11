@@ -332,14 +332,14 @@ namespace OWIN_API
             IpList.Add("192.168.113.4");
             IpList.Add("172.30.252.49");
             IpList.Add("192.168.113.8");
-            allClient.Add(new ClientInfo { IpAddress = "192.168.113.4", UserName = "刘涛", PartName = "研发" });
-            allClient.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "刘涛", PartName = "研发" });
-            allClient.Add(new ClientInfo { IpAddress = "192.168.113.3", UserName = "刘涛台机", PartName = "研发" });
-            allClient.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "刘涛笔记本", PartName = "研发" });
+            allClient.Add(new ClientInfo { IpAddress = "192.168.113.4", UserName = "123", PartName = "研发" });
+            allClient.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "123", PartName = "研发" });
+            allClient.Add(new ClientInfo { IpAddress = "192.168.113.3", UserName = "123台机", PartName = "研发" });
+            allClient.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "123笔记本", PartName = "研发" });
 
 
             db = new ClientsDbContext();
-            var ss = db.ClientsInfo.FirstOrDefault(x => x.UserName == "刘涛台机");
+            var ss = db.ClientsInfo.FirstOrDefault(x => x.UserName == "123台机");
             try
             {
                 ss.IpAddress = "192.168.113.8";
@@ -359,10 +359,10 @@ namespace OWIN_API
             //using (ClientsDbContext db = new ClientsDbContext())
             {
                 /////测试增加数据
-                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "192.168.113.4", UserName = "刘涛", PartName = "研发" });
-                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "刘涛", PartName = "研发" });
-                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "192.168.113.3", UserName = "刘涛台机", PartName = "研发" });
-                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "刘涛笔记本", PartName = "研发" });
+                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "192.168.113.4", UserName = "123", PartName = "研发" });
+                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "123", PartName = "研发" });
+                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "192.168.113.3", UserName = "123台机", PartName = "研发" });
+                //db.ClientsInfo.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "123笔记本", PartName = "研发" });
                 //db.SaveChanges();
 
             }
