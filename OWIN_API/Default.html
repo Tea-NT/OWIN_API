@@ -80,8 +80,8 @@ ViewBag.Title = "测试交流尬聊";
             </el-form-item>
             <el-form-item label="部门名称" prop="PartName">
                 <el-select v-model="ClientInfo.PartName" placeholder="请选择部门">
-                    <el-option label="生产技术部" value="shanghai"></el-option>
-                    <el-option label="物管部" value="beijing"></el-option>
+                    <el-option label="生产技术部" value="生产技术部"></el-option>
+                    <el-option label="物管部" value="物管部"></el-option>
                 </el-select>
             </el-form-item>
             <el-form-item label="创建时间" required>
@@ -224,6 +224,8 @@ ViewBag.Title = "测试交流尬聊";
                 //$('<li><strong>' + encodedName
                 //    + '</strong>:&nbsp;&nbsp;' + encodedMsg + '&nbsp;&nbsp;&nbsp;&nbsp;发送时间:' + showLocale(dateobj) + '</li>').insertAfter($('#showmessage')).fadeIn("3000");
             };
+
+            //停止客户端连接 
             chat.client.stopClient = function (x) {
                 refuseLogin = x;
                 $.connection.hub.stop();
@@ -233,16 +235,52 @@ ViewBag.Title = "测试交流尬聊";
                 }
                 if (x === 2) {
                     alert('该电脑已经登陆客户端，请勿重复登陆！');
-                    $('#systemmsg').html("该电脑已经登陆客户端，请勿重复登陆！");
+                    $('#systemmsg').html("该电脑已经登陆客户端，请勿重复登陆！或者等待一分钟后重试！");
                     $('#systemmsg').show();
                 }
                 $('#reconnect').hide(600);
-            }
+            };
+
+            chat.client.loginInfo = function (x) {
+                alert(x + ",欢迎登陆！");
+                $('#displayname').val(x) ;
+            };
+
             // Get the user name and store it to prepend to messages.
-            $('#displayname').val(prompt('请输入昵称:', ''));
+            //$('#displayname').val(prompt('请输入昵称:', ''));
             // Set initial focus to message input box.
             $('#message').focus();
             // Start the connection.
+            $.connection.hub.disconnected(function () {
+                if ($.connection.hub.lastError) {
+                    alert("连接超时，请检查网络状态，错误码：" + $.connection.hub.lastError.message);
+                }
+                $('#reconnect').html("重连");
+                if (refuseLogin === 0) {
+                    $('#reconnect').show(500);
+                }
+                $('#reconnect').attr("disabled", "false");
+                $('#reconnect').removeAttr("disabled");
+                $('#systemmsg').html("已断开连接！请检查网络状态！");
+                $('#reconnect').click(function () {
+                    $.connection.hub.start()
+                    $('#reconnect').html("连接中...");
+                    $('#reconnect').attr("disabled", "false");
+                })
+
+            });
+            $.connection.hub.stateChanged(function (change) {
+                var statConversion = { 0: 'connecting', 1: 'connected', 2: 'reconnecting', 4: 'disconnected' };
+                if (change.newState === 1) {
+                    $('#reconnect').hide(500);
+                    $('#systemmsg').html("已登陆！");
+                }
+                if (change.newState === 2) {
+                    $('#reconnect').html("连接中...");
+                    $('#reconnect').attr("disabled", "true");
+                    $('#reconnect').show(500);
+                }
+            });
             $.connection.hub.start().done(function () {
                 $('#reconnect').html("连接中...");
                 $('#sendmessage').click(function () {
@@ -288,36 +326,6 @@ ViewBag.Title = "测试交流尬聊";
                 }).fail(function (error) {
                     console.log('Error:' + error);
                 });
-                $.connection.hub.disconnected(function () {
-                    if ($.connection.hub.lastError) {
-                        alert("连接超时，请检查网络状态，错误码：" + $.connection.hub.lastError.message);
-                    }
-                    $('#reconnect').html("重连");
-                    if (refuseLogin === 0) {
-                        $('#reconnect').show(500);
-                    }
-                    $('#reconnect').attr("disabled", "false");
-                    $('#reconnect').removeAttr("disabled");
-                    $('#systemmsg').html("已断开连接！请检查网络状态！");
-                    $('#reconnect').click(function () {
-                        $.connection.hub.start()
-                        $('#reconnect').html("连接中...");
-                        $('#reconnect').attr("disabled", "false");
-                    })
-
-                });
-                $.connection.hub.stateChanged(function (change) {
-                    var statConversion = { 0: 'connecting', 1: 'connected', 2: 'reconnecting', 4: 'disconnected' };
-                    if (change.newState === 1) {
-                        $('#reconnect').hide(500);
-                        $('#systemmsg').html("已登陆！");
-                    }
-                    if (change.newState === 2) {
-                        $('#reconnect').html("连接中...");
-                        $('#reconnect').attr("disabled", "disabled");
-                        $('#reconnect').show(500);
-                    }
-                })
             });
         });
 

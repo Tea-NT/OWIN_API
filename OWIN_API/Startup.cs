@@ -237,6 +237,7 @@ namespace OWIN_API
                 return "已经添加过此IP地址，请勿重复添加";
             try
             {
+                clientInfo.CreatedTime = DateTime.Now;
                 ClientManager.db.ClientsInfo.Add(clientInfo);
                 ClientManager.db.SaveChanges();
             }
@@ -280,6 +281,7 @@ namespace OWIN_API
                 Clients.Caller.stopClient(errorcode);
             else
             {
+                Clients.Caller.loginInfo(client.UserName);
                 client.ConnectedID = Context.ConnectionId;
                 await Groups.Add(Context.ConnectionId, "All Users");
                 await Groups.Add(Context.ConnectionId, client.PartName);//加到部门组，部门聊天
@@ -339,17 +341,17 @@ namespace OWIN_API
 
 
             db = new ClientsDbContext();
-            var ss = db.ClientsInfo.FirstOrDefault(x => x.UserName == "123台机");
-            try
-            {
-                ss.IpAddress = "192.168.113.8";
-                db.SaveChanges();
-            }
-            catch (Exception)
-            {
+            //var ss = db.ClientsInfo.FirstOrDefault(x => x.UserName == "123");
+            //try
+            //{
+            //    ss.IpAddress = "192.168.113.8";
+            //    db.SaveChanges();
+            //}
+            //catch (Exception)
+            //{
 
-                throw;
-            }
+            //    throw;
+            //}
             //foreach(var cl in  db.ClientsInfo)
             //{
             //    cl.CreatedTime = DateTime.Now;
