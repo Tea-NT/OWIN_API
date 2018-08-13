@@ -335,7 +335,7 @@ namespace OWIN_API
             allClient.Add(new ClientInfo { IpAddress = "192.168.113.4", UserName = "123", PartName = "研发" });
             allClient.Add(new ClientInfo { IpAddress = "172.30.252.49", UserName = "123", PartName = "研发" });
             allClient.Add(new ClientInfo { IpAddress = "192.168.113.3", UserName = "123台机", PartName = "研发" });
-            allClient.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "123笔记本", PartName = "研发" });
+            allClient.Add(new ClientInfo { IpAddress = "13.104.154.234", UserName = "123笔记本", PartName = "研发中心" });
 
 
             db = new ClientsDbContext();
